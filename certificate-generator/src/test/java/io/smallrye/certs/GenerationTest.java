@@ -77,7 +77,7 @@ public class GenerationTest {
     void PEMGenerationWithEncryptedPrivateKey(@Dir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
-                .withFormat(Format.PEM)
+                .withFormat(Format.ENCRYPTED_PEM)
                 .withPassword("secret");
         Collection<CertificateFiles> files = new CertificateGenerator(tempDir, true).generate(request);
         Assertions.assertThat(files).hasSize(1);
@@ -252,6 +252,46 @@ public class GenerationTest {
     }
 
     @Test
+    void mTLSWithJKSAndEncryptedPemGeneration(@Dir Path tempDir) throws Exception {
+        CertificateRequest request = new CertificateRequest()
+                .withName("test")
+                .withPassword("secret")
+                .withClientCertificate()
+                .withFormat(Format.JKS)
+                .withFormat(Format.ENCRYPTED_PEM);
+        new CertificateGenerator(tempDir, true).generate(request);
+
+        File serverKeyStore = new File(tempDir.toFile(), "test-keystore.jks");
+        assertThat(serverKeyStore).isFile();
+        KeyCertOptions serverOptions = new JksOptions().setPath(serverKeyStore.getAbsolutePath()).setPassword("secret")
+                .setAlias("test");
+        File serverTrustStore = new File(tempDir.toFile(), "test-server-truststore.jks");
+        assertThat(serverTrustStore).isFile();
+        TrustOptions serverTrustOptions = new JksOptions().setPath(serverTrustStore.getAbsolutePath()).setPassword("secret")
+                .setAlias("test");
+
+        File clientKey = new File(tempDir.toFile(), "test-client.key");
+        assertThat(clientKey).isFile();
+        File clientCert = new File(tempDir.toFile(), "test-client.crt");
+        assertThat(clientCert).isFile();
+
+        Buffer buffer = decrypt(new File(tempDir.toFile(), "test-client.key"), "secret");
+
+        KeyCertOptions clientOptions = new PemKeyCertOptions()
+                .addKeyValue(buffer)
+                .addCertPath(clientCert.getAbsolutePath());
+        File clientTrustStore = new File(tempDir.toFile(), "test-client-ca.crt");
+        assertThat(clientTrustStore).isFile();
+        TrustOptions clientTrustOptions = new PemTrustOptions().addCertPath(clientTrustStore.getAbsolutePath());
+
+        var server = VertxHttpHelper.createHttpServerWithMutualAuth(vertx, serverOptions, serverTrustOptions);
+        var response = VertxHttpHelper.createHttpClientWithMutualAuthAndInvoke(vertx, server, clientOptions,
+                clientTrustOptions);
+
+        assertThat(response.statusCode()).isEqualTo(200);
+    }
+
+    @Test
     void mTLSWithJKSAndPemGeneration(@Dir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
@@ -268,6 +308,44 @@ public class GenerationTest {
         File serverTrustStore = new File(tempDir.toFile(), "test-server-truststore.jks");
         assertThat(serverTrustStore).isFile();
         TrustOptions serverTrustOptions = new JksOptions().setPath(serverTrustStore.getAbsolutePath()).setPassword("secret")
+                .setAlias("test");
+
+        File clientKey = new File(tempDir.toFile(), "test-client.key");
+        assertThat(clientKey).isFile();
+        File clientCert = new File(tempDir.toFile(), "test-client.crt");
+        assertThat(clientCert).isFile();
+
+        KeyCertOptions clientOptions = new PemKeyCertOptions()
+                .addKeyPath(clientKey.getAbsolutePath())
+                .addCertPath(clientCert.getAbsolutePath());
+        File clientTrustStore = new File(tempDir.toFile(), "test-client-ca.crt");
+        assertThat(clientTrustStore).isFile();
+        TrustOptions clientTrustOptions = new PemTrustOptions().addCertPath(clientTrustStore.getAbsolutePath());
+
+        var server = VertxHttpHelper.createHttpServerWithMutualAuth(vertx, serverOptions, serverTrustOptions);
+        var response = VertxHttpHelper.createHttpClientWithMutualAuthAndInvoke(vertx, server, clientOptions,
+                clientTrustOptions);
+
+        assertThat(response.statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void mTLSWithP12AndEncryptedPemGeneration(@Dir Path tempDir) throws Exception {
+        CertificateRequest request = new CertificateRequest()
+                .withName("test")
+                .withPassword("secret")
+                .withClientCertificate()
+                .withFormat(Format.PKCS12)
+                .withFormat(Format.ENCRYPTED_PEM);
+        new CertificateGenerator(tempDir, true).generate(request);
+
+        File serverKeyStore = new File(tempDir.toFile(), "test-keystore.p12");
+        assertThat(serverKeyStore).isFile();
+        KeyCertOptions serverOptions = new PfxOptions().setPath(serverKeyStore.getAbsolutePath()).setPassword("secret")
+                .setAlias("test");
+        File serverTrustStore = new File(tempDir.toFile(), "test-server-truststore.p12");
+        assertThat(serverTrustStore).isFile();
+        TrustOptions serverTrustOptions = new PfxOptions().setPath(serverTrustStore.getAbsolutePath()).setPassword("secret")
                 .setAlias("test");
 
         File clientKey = new File(tempDir.toFile(), "test-client.key");
@@ -315,10 +393,8 @@ public class GenerationTest {
         File clientCert = new File(tempDir.toFile(), "test-client.crt");
         assertThat(clientCert).isFile();
 
-        Buffer buffer = decrypt(new File(tempDir.toFile(), "test-client.key"), "secret");
-
         KeyCertOptions clientOptions = new PemKeyCertOptions()
-                .addKeyValue(buffer)
+                .addKeyPath(clientKey.getAbsolutePath())
                 .addCertPath(clientCert.getAbsolutePath());
         File clientTrustStore = new File(tempDir.toFile(), "test-client-ca.crt");
         assertThat(clientTrustStore).isFile();

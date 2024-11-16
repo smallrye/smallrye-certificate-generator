@@ -3,7 +3,11 @@ package io.smallrye.certs;
 import io.smallrye.certs.pem.parsers.EncryptedPKCS8Parser;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.net.*;
+import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.KeyCertOptions;
+import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.PemTrustOptions;
+import io.vertx.core.net.TrustOptions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -58,17 +62,14 @@ public class MixedFormatMTLSTest {
         generate();
 
         KeyCertOptions serverKS = switch (serverKeystoreFormat) {
-            case PEM -> {
+            case PEM -> new PemKeyCertOptions()
+                    .addKeyPath("target/certs/test-mixed-mtls.key")
+                    .addCertPath("target/certs/test-mixed-mtls.crt");
+            case ENCRYPTED_PEM -> {
                 Buffer buffer = decrypt(new File("target/certs/test-mixed-mtls.key"), "password");
-                if (buffer != null) {
-                    yield new PemKeyCertOptions()
-                            .addKeyValue(buffer)
-                            .addCertPath("target/certs/test-mixed-mtls.crt");
-                } else {
-                    yield new PemKeyCertOptions()
-                            .addKeyPath("target/certs/test-mixed-mtls.key")
-                            .addCertPath("target/certs/test-mixed-mtls.crt");
-                }
+                yield new PemKeyCertOptions()
+                        .addKeyValue(buffer)
+                        .addCertPath("target/certs/test-mixed-mtls.crt");
             }
             case JKS -> new JksOptions()
                     .setPath("target/certs/test-mixed-mtls-keystore.jks")
@@ -79,17 +80,14 @@ public class MixedFormatMTLSTest {
         };
 
         KeyCertOptions clientKS = switch (clientKeystoreFormat) {
-            case PEM -> {
+            case PEM -> new PemKeyCertOptions()
+                    .addKeyPath("target/certs/test-mixed-mtls-client.key")
+                    .addCertPath("target/certs/test-mixed-mtls-client.crt");
+            case ENCRYPTED_PEM -> {
                 Buffer buffer = decrypt(new File("target/certs/test-mixed-mtls-client.key"), "password");
-                if (buffer != null) {
-                    yield new PemKeyCertOptions()
-                            .addKeyValue(buffer)
-                            .addCertPath("target/certs/test-mixed-mtls-client.crt");
-                } else {
-                    yield new PemKeyCertOptions()
-                            .addKeyPath("target/certs/test-mixed-mtls-client.key")
-                            .addCertPath("target/certs/test-mixed-mtls-client.crt");
-                }
+                yield new PemKeyCertOptions()
+                        .addKeyValue(buffer)
+                        .addCertPath("target/certs/test-mixed-mtls-client.crt");
             }
             case JKS -> new JksOptions()
                     .setPath("target/certs/test-mixed-mtls-client-keystore.jks")
@@ -100,7 +98,7 @@ public class MixedFormatMTLSTest {
         };
 
         TrustOptions serverTS = switch (serverTruststoreFormat) {
-            case PEM -> new PemTrustOptions()
+            case PEM, ENCRYPTED_PEM -> new PemTrustOptions()
                     .addCertPath("target/certs/test-mixed-mtls-server-ca.crt");
             case JKS -> new JksOptions()
                     .setPath("target/certs/test-mixed-mtls-server-truststore.jks")
@@ -111,7 +109,7 @@ public class MixedFormatMTLSTest {
         };
 
         TrustOptions clientTS = switch (clientTrustoreFormat) {
-            case PEM -> new PemTrustOptions()
+            case PEM, ENCRYPTED_PEM -> new PemTrustOptions()
                     .addCertPath("target/certs/test-mixed-mtls-client-ca.crt");
             case JKS -> new JksOptions()
                     .setPath("target/certs/test-mixed-mtls-client-truststore.jks")
@@ -137,7 +135,7 @@ public class MixedFormatMTLSTest {
                 .withFormats(List.of(Format.JKS, Format.PKCS12, Format.PEM))
                 .withClientCertificate()
                 .withPassword("password");
-        CertificateGenerator generator = new CertificateGenerator(new File("target/certs").toPath(), false);
+        CertificateGenerator generator = new CertificateGenerator(new File("target/certs").toPath(), true);
         generator.generate(request);
     }
 

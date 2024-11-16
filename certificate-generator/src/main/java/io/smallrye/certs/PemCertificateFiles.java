@@ -8,6 +8,7 @@ public final class PemCertificateFiles implements CertificateFiles {
     private final Path root;
     private final String name;
     private final boolean client;
+    private final String password;
 
     private final Path certFile;
     private final Path keyFile;
@@ -16,7 +17,7 @@ public final class PemCertificateFiles implements CertificateFiles {
     private final Path clientKeyFile;
     private final Path serverTrustFile;
 
-    public PemCertificateFiles(Path root, String name, boolean client) {
+    public PemCertificateFiles(Path root, String name, boolean client, String password) {
         this.root = root;
         this.name = name;
         this.client = client;
@@ -26,10 +27,14 @@ public final class PemCertificateFiles implements CertificateFiles {
         this.clientCertFile = root.resolve(name + "-client.crt");
         this.clientKeyFile = root.resolve(name + "-client.key");
         this.serverTrustFile = root.resolve(name + "-server-ca.crt");
+        this.password = password;
     }
 
     @Override
     public Format format() {
+        if (password != null) {
+            return Format.ENCRYPTED_PEM;
+        }
         return Format.PEM;
     }
 
@@ -50,7 +55,7 @@ public final class PemCertificateFiles implements CertificateFiles {
 
     @Override
     public String password() {
-        return null;
+        return password;
     }
 
     @Override

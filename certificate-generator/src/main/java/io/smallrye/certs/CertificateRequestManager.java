@@ -1,7 +1,5 @@
 package io.smallrye.certs;
 
-import static io.smallrye.certs.CertificateUtils.writeTruststoreToPem;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.security.KeyPair;
@@ -10,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static io.smallrye.certs.CertificateUtils.writeTruststoreToPem;
 
 public class CertificateRequestManager {
 
@@ -58,7 +58,7 @@ public class CertificateRequestManager {
         List<CertificateFiles> output = new ArrayList<>();
         for (Format format : request.formats()) {
             switch (format) {
-                case PEM -> output.addAll(generatePemCertificates(root, replaceIfExists));
+                case PEM, ENCRYPTED_PEM -> output.addAll(generatePemCertificates(root, replaceIfExists));
                 case JKS -> output.add(generateJksCertificates(root, replaceIfExists));
                 case PKCS12 -> output.add(generatePkcs12Certificates(root, replaceIfExists));
             }
@@ -149,7 +149,13 @@ public class CertificateRequestManager {
 
     private CertificateFiles writePem(String name, CertificateHolder holder, Path root, boolean replaceIfExists)
             throws Exception {
-        PemCertificateFiles files = new PemCertificateFiles(root, name, holder.hasClient());
+        PemCertificateFiles files = new PemCertificateFiles(root, name, holder.hasClient(), request.getPassword());
+
+        if (request.formats().contains(Format.ENCRYPTED_PEM)) {
+            if (request.getPassword() == null) {
+                throw new IllegalArgumentException("The password is required for the encrypted PEM format");
+            }
+        }
 
         X509Certificate serverCert = holder.certificate();
         X509Certificate clientCert = holder.clientCertificate();
@@ -167,7 +173,11 @@ public class CertificateRequestManager {
             CertificateUtils.writeCertificateToPEM(serverCert, certFile);
         }
         if (replaceIfExists || !keyFile.isFile()) {
-            CertificateUtils.writePrivateKeyToPem(serverKey.getPrivate(), request.getPassword(), keyFile);
+            if (request.formats().contains(Format.ENCRYPTED_PEM)) {
+                CertificateUtils.writePrivateKeyToPem(serverKey.getPrivate(), request.getPassword(), keyFile);
+            } else {
+                CertificateUtils.writePrivateKeyToPem(serverKey.getPrivate(), null, keyFile);
+            }
         }
         if (replaceIfExists || !clientTrustFile.isFile()) {
             writeTruststoreToPem(List.of(serverCert), clientTrustFile);
@@ -178,7 +188,11 @@ public class CertificateRequestManager {
                 CertificateUtils.writeCertificateToPEM(clientCert, clientCertFile);
             }
             if (replaceIfExists || !clientKeyFile.isFile()) {
-                CertificateUtils.writePrivateKeyToPem(clientKey.getPrivate(), request.getPassword(), clientKeyFile);
+                if (request.formats().contains(Format.ENCRYPTED_PEM)) {
+                    CertificateUtils.writePrivateKeyToPem(clientKey.getPrivate(), request.getPassword(), clientKeyFile);
+                } else {
+                    CertificateUtils.writePrivateKeyToPem(clientKey.getPrivate(), null, clientKeyFile);
+                }
             }
             if (replaceIfExists || !serverTrustfile.isFile()) {
                 writeTruststoreToPem(List.of(clientCert), serverTrustfile);

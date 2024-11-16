@@ -39,6 +39,16 @@ public final class CertificateRequest {
     }
 
     public CertificateRequest withFormat(Format format) {
+        if (format.equals(Format.PEM)) {
+            if (formats.contains(Format.ENCRYPTED_PEM)) {
+                throw new IllegalArgumentException("Cannot mix PEM and ENCRYPTED_PEM formats");
+            }
+        }
+        if (format.equals(Format.ENCRYPTED_PEM)) {
+            if (formats.contains(Format.PEM)) {
+                throw new IllegalArgumentException("Cannot mix PEM and ENCRYPTED_PEM formats");
+            }
+        }
         this.formats.add(format);
         return this;
     }

@@ -211,7 +211,7 @@ public class CertificateUtils {
     public static void writePrivateKeyToPem(PrivateKey privateKey, String password, File output) throws Exception {
 
         byte[] content = privateKey.getEncoded();
-        ;
+
         if (password != null) {
             byte[] salt = generateSalt();
             PBEKeySpec pbeKeySpec = new PBEKeySpec(password.toCharArray());

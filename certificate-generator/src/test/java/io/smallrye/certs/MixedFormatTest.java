@@ -5,7 +5,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.net.*;
+import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.KeyCertOptions;
+import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.PemTrustOptions;
+import io.vertx.core.net.TrustOptions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,7 +19,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,7 +52,10 @@ public class MixedFormatTest {
                 Arguments.of(Format.PKCS12, Format.PEM),
                 Arguments.of(Format.PEM, Format.PEM),
                 Arguments.of(Format.PEM, Format.JKS),
-                Arguments.of(Format.PEM, Format.PKCS12));
+                Arguments.of(Format.PEM, Format.PKCS12),
+                Arguments.of(Format.ENCRYPTED_PEM, Format.ENCRYPTED_PEM),
+                Arguments.of(Format.ENCRYPTED_PEM, Format.JKS),
+                Arguments.of(Format.ENCRYPTED_PEM, Format.PKCS12));
     }
 
     private static Buffer decrypt(File pem, String password) throws IOException {
@@ -57,22 +67,21 @@ public class MixedFormatTest {
     @ParameterizedTest
     @MethodSource
     public void testMixingKeystoreAndTruststoreFormat(Format keystoreFormat, Format truststoreFormat) throws Exception {
-        generate();
+        generate(keystoreFormat, truststoreFormat);
 
         HttpServer server = switch (keystoreFormat) {
             case PEM -> {
+                KeyCertOptions options = new PemKeyCertOptions()
+                        .addKeyPath("target/certs/test-mixed.key")
+                        .addCertPath("target/certs/test-mixed.crt");
+                yield VertxHttpHelper.createHttpServer(vertx, options);
+            }
+            case ENCRYPTED_PEM -> {
                 var buffer = decrypt(new File("target/certs/test-mixed.key"), "password");
-                if (buffer != null) {
-                    KeyCertOptions options = new PemKeyCertOptions()
-                            .addKeyValue(buffer)
-                            .addCertPath("target/certs/test-mixed.crt");
-                    yield VertxHttpHelper.createHttpServer(vertx, options);
-                } else {
-                    KeyCertOptions options = new PemKeyCertOptions()
-                            .addKeyPath("target/certs/test-mixed.key")
-                            .addCertPath("target/certs/test-mixed.crt");
-                    yield VertxHttpHelper.createHttpServer(vertx, options);
-                }
+                KeyCertOptions options = new PemKeyCertOptions()
+                        .addKeyValue(buffer)
+                        .addCertPath("target/certs/test-mixed.crt");
+                yield VertxHttpHelper.createHttpServer(vertx, options);
             }
             case JKS -> {
                 KeyCertOptions options = new JksOptions()
@@ -89,7 +98,7 @@ public class MixedFormatTest {
         };
 
         TrustOptions trustOptions = switch (truststoreFormat) {
-            case PEM -> {
+            case PEM, ENCRYPTED_PEM -> {
                 PemTrustOptions options = new PemTrustOptions()
                         .addCertPath("target/certs/test-mixed-ca.crt");
                 yield options;
@@ -113,16 +122,20 @@ public class MixedFormatTest {
 
     }
 
-    private void generate() throws Exception {
+    private void generate(Format keystoreFormat, Format truststoreFormat) throws Exception {
         File target = new File("target/certs");
         if (!target.isDirectory()) {
             target.mkdirs();
         }
+        Set<Format> formats = new HashSet<>();
+        formats.add(keystoreFormat);
+        formats.add(truststoreFormat);
+
         CertificateRequest request = new CertificateRequest()
                 .withName("test-mixed")
-                .withFormats(List.of(Format.JKS, Format.PKCS12, Format.PEM))
+                .withFormats(new ArrayList<>(formats))
                 .withPassword("password");
-        CertificateGenerator generator = new CertificateGenerator(new File("target/certs").toPath(), false);
+        CertificateGenerator generator = new CertificateGenerator(new File("target/certs").toPath(), true);
         generator.generate(request);
     }
 

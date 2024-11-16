@@ -34,6 +34,13 @@ public class EncryptedPKCS8Parser implements PKPemParser {
     public EncryptedPKCS8Parser() {
     }
 
+    /**
+     * Extracts the private key from the encrypted PKCS#8 format.
+     *
+     * @param content the encrypted PKCS#8 content
+     * @param password the password to decrypt the key
+     * @return the private key or {@code null} if the content is not a PKCS#8 encrypted key
+     */
     @Override
     public PrivateKey getKey(String content, String password) {
         try {
@@ -87,6 +94,13 @@ public class EncryptedPKCS8Parser implements PKPemParser {
         return algName;
     }
 
+    /**
+     * Retrieves the private key as plain PKCS#8 from the encrypted PKCS#8 content.
+     *
+     * @param content the encrypted PKCS#8 content
+     * @param secret the password to decrypt the key
+     * @return the decrypted PKCS#8 key or {@code null} if the content is not a PKCS#8 encrypted key
+     */
     public Buffer decryptKey(String content, String secret) {
         var pk = getKey(content, secret);
         if (pk == null) {

@@ -5,12 +5,13 @@ package io.smallrye.certs;
  */
 public enum Format {
     PEM,
+    ENCRYPTED_PEM,
     JKS,
     PKCS12;
 
     String extension() {
         return switch (this) {
-            case PEM -> "pem";
+            case PEM, ENCRYPTED_PEM -> "pem";
             case JKS -> "jks";
             case PKCS12 -> "p12";
         };

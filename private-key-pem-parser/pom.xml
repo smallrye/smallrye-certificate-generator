@@ -8,7 +8,7 @@
         <version>0.10.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>private-key-pem-parser</artifactId>
+    <artifactId>smallrye-private-key-pem-parser</artifactId>
     <name>SmallRye Certificate Generator - Private Key PEM utilities</name>
 
     <dependencies>

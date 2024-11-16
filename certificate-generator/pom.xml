@@ -27,7 +27,7 @@
         </dependency>
         <dependency>
             <groupId>io.smallrye.certs</groupId>
-            <artifactId>private-key-pem-parser</artifactId>
+            <artifactId>smallrye-private-key-pem-parser</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
