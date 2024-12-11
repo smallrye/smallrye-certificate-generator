@@ -11,6 +11,10 @@
     <artifactId>smallrye-private-key-pem-parser</artifactId>
     <name>SmallRye Certificate Generator - Private Key PEM utilities</name>
 
+    <properties>
+        <module-name>io.smallrye.certs.pem.private_keys</module-name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.smallrye.common</groupId>
