@@ -12,6 +12,10 @@
     <name>SmallRye Certificate Generator - Maven Plugin</name>
     <packaging>maven-plugin</packaging>
 
+    <properties>
+        <module-name>io.smallrye.certs.maven</module-name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.smallrye.certs</groupId>

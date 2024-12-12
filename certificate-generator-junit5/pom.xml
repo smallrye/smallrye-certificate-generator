@@ -10,6 +10,9 @@
 
     <artifactId>smallrye-certificate-generator-junit5</artifactId>
 
+    <properties>
+        <module-name>io.smallrye.certs.junit5</module-name>
+    </properties>
 
     <name>SmallRye Certificate Generator - Junit5 Extension</name>
     <description>A Junit5 extension to generate certificates</description>

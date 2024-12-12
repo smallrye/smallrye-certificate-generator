@@ -11,6 +11,10 @@
     <artifactId>smallrye-certificate-generator</artifactId>
     <name>SmallRye Certificate Generator</name>
 
+    <properties>
+        <module-name>io.smallrye.certs.generator</module-name>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.bouncycastle</groupId>
