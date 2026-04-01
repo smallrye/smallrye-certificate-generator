@@ -13,7 +13,6 @@
 
     <properties>
         <module-name>io.smallrye.certs.generator</module-name>
-        <dd-plist.version>1.28</dd-plist.version>
     </properties>
 
     <dependencies>
