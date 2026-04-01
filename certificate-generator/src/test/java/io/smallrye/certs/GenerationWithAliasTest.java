@@ -10,7 +10,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.resource.Dir;
+import org.junit.jupiter.api.io.TempDir;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.net.*;
@@ -30,7 +30,7 @@ public class GenerationWithAliasTest {
     }
 
     @Test
-    void JKSGeneration(@Dir Path tempDir) throws Exception {
+    void JKSGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.JKS)
@@ -51,7 +51,7 @@ public class GenerationWithAliasTest {
     }
 
     @Test
-    void PEMGeneration(@Dir Path tempDir) throws Exception {
+    void PEMGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.PEM)
@@ -72,7 +72,7 @@ public class GenerationWithAliasTest {
     }
 
     @Test
-    void PCKS12Generation(@Dir Path tempDir) throws Exception {
+    void PCKS12Generation(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.PKCS12)
@@ -95,7 +95,7 @@ public class GenerationWithAliasTest {
     }
 
     @Test
-    void mTLSWithJKSGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithJKSGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -127,7 +127,7 @@ public class GenerationWithAliasTest {
     }
 
     @Test
-    void mTLSWithP12Generation(@Dir Path tempDir) throws Exception {
+    void mTLSWithP12Generation(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -159,7 +159,7 @@ public class GenerationWithAliasTest {
     }
 
     @Test
-    void mTLSWithPemGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithPemGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.PEM)

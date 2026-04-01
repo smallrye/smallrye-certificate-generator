@@ -7,12 +7,12 @@ import java.nio.file.Path;
 import java.security.KeyStore;
 
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.resource.Dir;
+import org.junit.jupiter.api.io.TempDir;
 
 public class GeneratedKeyStoreTest {
 
     @Test
-    void verifyIfJKSKeyStoreSupportAliasPassword(@Dir Path dir) throws Exception {
+    void verifyIfJKSKeyStoreSupportAliasPassword(@TempDir Path dir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withFormat(Format.JKS)
                 .withPassword("secret")
@@ -45,7 +45,7 @@ public class GeneratedKeyStoreTest {
     }
 
     @Test
-    void verifyIfP12SKeyStoreSupportAliasPassword(@Dir Path dir) throws Exception {
+    void verifyIfP12SKeyStoreSupportAliasPassword(@TempDir Path dir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withFormat(Format.PKCS12)
                 .withPassword("secret")

@@ -14,7 +14,7 @@ public class VertxHttpHelper {
         return vertx.createHttpServer(new HttpServerOptions().setSsl(true).setKeyCertOptions(options))
                 .requestHandler(req -> req.response().end("OK"))
                 .listen(0)
-                .toCompletionStage().toCompletableFuture().join();
+                .await();
     }
 
     public static HttpClientResponse createHttpClientAndInvoke(Vertx vertx, HttpServer server, TrustOptions options) {
@@ -27,15 +27,21 @@ public class VertxHttpHelper {
         if (options == null) {
             return vertx.createHttpClient(new HttpClientOptions()
                     .setSsl(true).setDefaultHost("localhost").setDefaultPort(server.actualPort()).setVerifyHost(verifyHost))
-                    .request(HttpMethod.GET, "/").flatMap(HttpClientRequest::send).toCompletionStage().toCompletableFuture()
-                    .join();
+                    .request(HttpMethod.GET, "/").flatMap(HttpClientRequest::send)
+                    .await();
         }
 
-        return vertx.createHttpClient(new HttpClientOptions()
+        HttpClientAgent client = vertx.createHttpClient(new HttpClientOptions()
                 .setSsl(true).setDefaultHost("localhost").setDefaultPort(server.actualPort())
                 .setTrustOptions(options)
-                .setVerifyHost(verifyHost))
-                .request(HttpMethod.GET, "/").flatMap(HttpClientRequest::send).toCompletionStage().toCompletableFuture().join();
+                .setVerifyHost(verifyHost));
+
+        HttpClientResponse response = client
+                .request(HttpMethod.GET, "/").flatMap(HttpClientRequest::send)
+                .await();
+
+        client.close().await();
+        return response;
     }
 
     public static HttpServer createHttpServerWithMutualAuth(Vertx vertx, KeyCertOptions serverOptions,
@@ -49,7 +55,7 @@ public class VertxHttpHelper {
         return vertx.createHttpServer(options)
                 .requestHandler(req -> req.response().end("OK"))
                 .listen(0)
-                .toCompletionStage().toCompletableFuture().join();
+                .await();
     }
 
     static HttpClientResponse createHttpClientWithMutualAuthAndInvoke(Vertx vertx, HttpServer server,
@@ -58,7 +64,11 @@ public class VertxHttpHelper {
                 .setSsl(true).setDefaultHost("localhost").setDefaultPort(server.actualPort())
                 .setTrustOptions(trustOptions)
                 .setKeyCertOptions(clientOptions);
-        return vertx.createHttpClient(localhost)
-                .request(HttpMethod.GET, "/").flatMap(HttpClientRequest::send).toCompletionStage().toCompletableFuture().join();
+        HttpClientAgent client = vertx.createHttpClient(localhost);
+        HttpClientResponse response = client
+                .request(HttpMethod.GET, "/").flatMap(HttpClientRequest::send)
+                .await();
+        client.close().await();
+        return response;
     }
 }
