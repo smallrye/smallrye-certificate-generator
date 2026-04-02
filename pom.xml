@@ -10,7 +10,7 @@
 
     <groupId>io.smallrye.certs</groupId>
     <artifactId>smallrye-certificate-generator-parent</artifactId>
-    <version>1.0.1</version>
+    <version>999-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -33,7 +33,7 @@
         <connection>scm:git:git@github.com:smallrye/smallrye-certificate-generator.git</connection>
         <developerConnection>scm:git:git@github.com:smallrye/smallrye-certificate-generator.git</developerConnection>
         <url>https://github.com/smallrye/smallrye-certificate-generator/</url>
-        <tag>1.0.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
