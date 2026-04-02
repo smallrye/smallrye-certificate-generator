@@ -16,10 +16,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.resource.Dir;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.net.*;
+import org.junit.jupiter.api.io.TempDir;
 
 public class GenerationTest {
 
@@ -36,7 +36,7 @@ public class GenerationTest {
     }
 
     @Test
-    void JKSGeneration(@Dir Path tempDir) throws Exception {
+    void JKSGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.JKS)
@@ -54,7 +54,7 @@ public class GenerationTest {
     }
 
     @Test
-    void PEMGeneration(@Dir Path tempDir) throws Exception {
+    void PEMGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.PEM);
@@ -74,7 +74,7 @@ public class GenerationTest {
     }
 
     @Test
-    void PEMGenerationWithEncryptedPrivateKey(@Dir Path tempDir) throws Exception {
+    void PEMGenerationWithEncryptedPrivateKey(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.ENCRYPTED_PEM)
@@ -104,7 +104,7 @@ public class GenerationTest {
     }
 
     @Test
-    void PCKS12Generation(@Dir Path tempDir) throws Exception {
+    void PCKS12Generation(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.PKCS12)
@@ -124,7 +124,7 @@ public class GenerationTest {
     }
 
     @Test
-    void multiFormatWithP12AndPemGeneration(@Dir Path tempDir) throws Exception {
+    void multiFormatWithP12AndPemGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.PKCS12)
@@ -144,7 +144,7 @@ public class GenerationTest {
     }
 
     @Test
-    void multiFormatWithJKSAndPemGeneration(@Dir Path tempDir) throws Exception {
+    void multiFormatWithJKSAndPemGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.JKS)
@@ -164,7 +164,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSWithPemGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithPemGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withClientCertificate()
@@ -192,7 +192,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSWithJKSGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithJKSGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -222,7 +222,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSWithPKCS12Generation(@Dir Path tempDir) throws Exception {
+    void mTLSWithPKCS12Generation(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -252,7 +252,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSWithJKSAndEncryptedPemGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithJKSAndEncryptedPemGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -292,7 +292,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSWithJKSAndPemGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithJKSAndPemGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -330,7 +330,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSWithP12AndEncryptedPemGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithP12AndEncryptedPemGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -370,7 +370,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSWithP12AndPemGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithP12AndPemGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -408,7 +408,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSWithP12AndJKSGeneration(@Dir Path tempDir) throws Exception {
+    void mTLSWithP12AndJKSGeneration(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")
@@ -442,7 +442,7 @@ public class GenerationTest {
     }
 
     @Test
-    void mTLSMultiFormatVerification(@Dir Path tempDir) throws Exception {
+    void mTLSMultiFormatVerification(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withPassword("secret")

@@ -19,7 +19,7 @@
         <dependency>
             <groupId>io.smallrye.common</groupId>
             <artifactId>smallrye-common-constraint</artifactId>
-            <version>2.9.0</version>
+            <version>${smallrye-common-constraint.version}</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
@@ -40,11 +40,6 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit-pioneer</groupId>
-            <artifactId>junit-pioneer</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

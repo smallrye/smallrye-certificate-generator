@@ -7,12 +7,12 @@ import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.resource.Dir;
+import org.junit.jupiter.api.io.TempDir;
 
 public class SubjectAlternativeNameTest {
 
     @Test
-    void testSubjectAlternativeName(@Dir Path tempDir) throws Exception {
+    void testSubjectAlternativeName(@TempDir Path tempDir) throws Exception {
         CertificateRequest request = new CertificateRequest()
                 .withName("test")
                 .withFormat(Format.PKCS12)
