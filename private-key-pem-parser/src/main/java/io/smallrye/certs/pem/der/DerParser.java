@@ -78,12 +78,21 @@ public class DerParser {
     private int cursor;
 
     public DerParser(byte[] bytes) {
+        if (bytes.length == 0) {
+            throw new IllegalArgumentException("Empty DER input");
+        }
         var position = new AtomicInteger(0);
         var buffer = Buffer.buffer(bytes);
         byte b = buffer.getByte(position.getAndIncrement());
         type = Type.from(b);
         tag = decodeTag(b, buffer, position);
         length = decodeLength(buffer, position);
+        int remaining = buffer.length() - position.get();
+        if (length < 0 || length > remaining) {
+            throw new IllegalArgumentException(
+                    "DER length field claims " + Integer.toUnsignedLong(length)
+                            + " bytes but only " + remaining + " bytes remain in the input");
+        }
         content = buffer.slice(position.get(), position.get() + length);
         size = position.get() + length;
         cursor = 0; // Position in the content
@@ -96,16 +105,21 @@ public class DerParser {
             return t;
         }
         t = 0;
-        b = bytes.getByte(position.getAndIncrement());
-        while ((b & 0x80) != 0) {
+        do {
+            if (position.get() >= bytes.length()) {
+                throw new IllegalArgumentException("Truncated DER tag encoding");
+            }
+            b = bytes.getByte(position.getAndIncrement());
             t <<= 7;
             t = t | (b & 0x7F);
-            b = bytes.getByte(position.getAndIncrement());
-        }
+        } while ((b & 0x80) != 0);
         return t;
     }
 
     private int decodeLength(Buffer bytes, AtomicInteger position) {
+        if (position.get() >= bytes.length()) {
+            throw new IllegalArgumentException("Truncated DER input: no length byte");
+        }
         byte b = bytes.getByte(position.getAndIncrement());
         if ((b & 0x80) == 0) {
             return b & 0x7F;
@@ -113,6 +127,13 @@ public class DerParser {
         int numberOfLengthBytes = (b & 0x7F);
         if (numberOfLengthBytes == 0) {
             throw new IllegalArgumentException("Indefinite form is not supported");
+        }
+        if (numberOfLengthBytes > 4) {
+            throw new IllegalArgumentException(
+                    "DER length field too large: " + numberOfLengthBytes + " bytes");
+        }
+        if (position.get() + numberOfLengthBytes > bytes.length()) {
+            throw new IllegalArgumentException("Truncated DER input: not enough length bytes");
         }
         int length = 0;
         for (int i = 0; i < numberOfLengthBytes; i++) {
