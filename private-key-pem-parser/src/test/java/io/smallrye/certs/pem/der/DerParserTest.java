@@ -157,8 +157,53 @@ class DerParserTest {
     }
 
     @Test
+    void testFabricatedLengthExceedingBuffer() {
+        // TAG: INTEGER, LENGTH: 0x84 means 4-byte length follows, claiming 0x20000000 (512MB)
+        // but only 1 byte of actual content
+        byte[] bytes = new byte[] { 0x02, (byte) 0x84, 0x20, 0x00, 0x00, 0x00, 0x01 };
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            new DerParser(bytes);
+        });
+        assertTrue(exception.getMessage().contains("DER length field claims"));
+    }
+
+    @Test
+    void testLengthBytesExceedingBuffer() {
+        // TAG: INTEGER, LENGTH: 0x83 means 3-byte length follows, but only 1 byte available
+        byte[] bytes = new byte[] { 0x02, (byte) 0x83, 0x01 };
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            new DerParser(bytes);
+        });
+        assertTrue(exception.getMessage().contains("Truncated"));
+    }
+
+    @Test
+    void testLengthFieldTooLarge() {
+        // TAG: INTEGER, LENGTH: 0x85 means 5-byte length follows — exceeds 4-byte max
+        byte[] bytes = new byte[] { 0x02, (byte) 0x85, 0x01, 0x02, 0x03, 0x04, 0x05 };
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            new DerParser(bytes);
+        });
+        assertTrue(exception.getMessage().contains("DER length field too large"));
+    }
+
+    @Test
+    void testEmptyInput() {
+        byte[] bytes = new byte[0];
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new DerParser(bytes));
+        assertTrue(exception.getMessage().contains("Empty DER input"));
+    }
+
+    @Test
+    void testTruncatedTagEncoding() {
+        // High-tag-number form (0x1F) but no subsequent bytes
+        byte[] bytes = new byte[] { 0x1F };
+        assertThrows(IllegalArgumentException.class, () -> new DerParser(bytes));
+    }
+
+    @Test
     void testIndefiniteFormError() {
-        // Example of an invalid DER encoding (indefinite form is not supported in DER)
+        // Invalid DER encoding (indefinite form is not supported in DER)
         byte[] bytes = new byte[] { 0x04, (byte) 0x80 }; // OCTET STRING with indefinite length form (0x80)
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -177,10 +222,8 @@ class DerParserTest {
                 0x02, 0x01, 0x2A // INTEGER with value 42 (0x2A in hex)
         };
 
-        // Initialize DER parser
         DerParser parser = new DerParser(derData);
 
-        // Check that the first object is a sequence
         assertEquals(DerParser.Type.PRIMITIVE, parser.type());
         assertEquals(DerParser.Tag.SEQUENCE.number(), parser.tag());
 
@@ -203,10 +246,8 @@ class DerParserTest {
                 0x02, 0x01, 0x2A // INTEGER with value 42 (0x2A in hex)
         };
 
-        // Initialize DER parser
         DerParser parser = new DerParser(derData);
 
-        // Check that the first object is a sequence
         assertEquals(DerParser.Type.CONSTRUCTED, parser.type());
         assertEquals(DerParser.Tag.SEQUENCE.number(), parser.tag());
 
