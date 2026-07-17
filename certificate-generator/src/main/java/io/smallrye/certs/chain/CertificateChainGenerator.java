@@ -29,6 +29,7 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import io.smallrye.certs.CertificateUtils;
+import io.smallrye.certs.KeyAlgorithm;
 
 public class CertificateChainGenerator {
 
@@ -39,6 +40,8 @@ public class CertificateChainGenerator {
     private String cn = "localhost";
 
     private List<String> sans = List.of("DNS:localhost");
+
+    private KeyAlgorithm keyAlgorithm = KeyAlgorithm.RSA_2048;
 
     private final File baseDir;
 
@@ -71,6 +74,11 @@ public class CertificateChainGenerator {
         return this;
     }
 
+    public CertificateChainGenerator withKeyAlgorithm(KeyAlgorithm keyAlgorithm) {
+        this.keyAlgorithm = keyAlgorithm;
+        return this;
+    }
+
     public void generate() throws Exception {
 
         // Generate root certificate
@@ -98,9 +106,7 @@ public class CertificateChainGenerator {
     }
 
     private KeyPair generateKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "BC");
-        keyPairGenerator.initialize(2048, new SecureRandom());
-        return keyPairGenerator.generateKeyPair();
+        return keyAlgorithm.generateKeyPairWithBouncyCastleProvider();
     }
 
     private X509Certificate generateRootCertificate(KeyPair rootKeyPair)
@@ -123,7 +129,7 @@ public class CertificateChainGenerator {
         certGen.addExtension(Extension.subjectKeyIdentifier, false,
                 new JcaX509ExtensionUtils().createSubjectKeyIdentifier(rootKeyPair.getPublic()));
 
-        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
+        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder(keyAlgorithm.signatureAlgorithm());
         ContentSigner signer = contentSignerBuilder.build(rootKeyPair.getPrivate());
         X509CertificateHolder holder = certGen.build(signer);
         return new JcaX509CertificateConverter().getCertificate(holder);
@@ -148,7 +154,7 @@ public class CertificateChainGenerator {
         certGen.addExtension(Extension.subjectKeyIdentifier, false,
                 new JcaX509ExtensionUtils().createSubjectKeyIdentifier(intermediaryKeyPair.getPublic()));
 
-        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
+        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder(keyAlgorithm.signatureAlgorithm());
         ContentSigner contentSigner = contentSignerBuilder.build(rootKeyPair.getPrivate());
         return new JcaX509CertificateConverter().getCertificate(certGen.build(contentSigner));
     }
@@ -178,7 +184,7 @@ public class CertificateChainGenerator {
                 sans.stream().map(CertificateUtils::toGeneralName).toArray(ASN1Encodable[]::new));
         certGen.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
 
-        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
+        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder(keyAlgorithm.signatureAlgorithm());
         ContentSigner contentSigner = contentSignerBuilder.build(intermediaryKeyPair.getPrivate());
         return new JcaX509CertificateConverter().getCertificate(certGen.build(contentSigner));
     }

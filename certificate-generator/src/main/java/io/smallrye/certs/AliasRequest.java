@@ -10,6 +10,7 @@ public class AliasRequest {
     private final List<String> sans = new ArrayList<>();
 
     private boolean client = false;
+    private KeyAlgorithm keyAlgorithm;
 
     public AliasRequest withPassword(String password) {
         this.password = password;
@@ -18,6 +19,11 @@ public class AliasRequest {
 
     public AliasRequest withCN(String cn) {
         this.cn = cn;
+        return this;
+    }
+
+    public AliasRequest withKeyAlgorithm(KeyAlgorithm keyAlgorithm) {
+        this.keyAlgorithm = keyAlgorithm;
         return this;
     }
 
@@ -46,6 +52,10 @@ public class AliasRequest {
 
     public boolean hasClient() {
         return client;
+    }
+
+    public KeyAlgorithm getKeyAlgorithm() {
+        return keyAlgorithm;
     }
 
     public List<String> getSubjectAlternativeNames() {

@@ -46,7 +46,8 @@ public class CertificateGenerationExtension implements BeforeAllCallback, Parame
                     .withFormats(Arrays.asList(certificate.formats()))
                     .withCN(certificate.cn())
                     .withPassword(certificate.password().isEmpty() ? null : certificate.password())
-                    .withDuration(Duration.ofDays(certificate.duration()));
+                    .withDuration(Duration.ofDays(certificate.duration()))
+                    .withKeyAlgorithm(certificate.keyAlgorithm());
 
             for (String san : certificate.subjectAlternativeNames()) {
                 request.withSubjectAlternativeName(san);
@@ -56,7 +57,8 @@ public class CertificateGenerationExtension implements BeforeAllCallback, Parame
                 AliasRequest nested = new AliasRequest()
                         .withCN(alias.cn())
                         .withPassword(alias.password())
-                        .withClientCertificate(alias.client());
+                        .withClientCertificate(alias.client())
+                        .withKeyAlgorithm(alias.keyAlgorithm());
                 request.withAlias(alias.name(), nested);
                 for (String s : alias.subjectAlternativeNames()) {
                     nested.withSubjectAlternativeName(s);

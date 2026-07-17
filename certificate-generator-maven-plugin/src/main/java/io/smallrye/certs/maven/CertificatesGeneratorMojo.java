@@ -4,6 +4,7 @@ import io.smallrye.certs.AliasRequest;
 import io.smallrye.certs.CertificateGenerator;
 import io.smallrye.certs.CertificateRequest;
 import io.smallrye.certs.Format;
+import io.smallrye.certs.KeyAlgorithm;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -44,7 +45,8 @@ public class CertificatesGeneratorMojo extends AbstractMojo {
                         .withClientCertificate(request.isClient())
                         .withCN(request.getCn())
                         .withPassword(request.getPassword())
-                        .withDuration(Duration.ofDays(request.getDuration()));
+                        .withDuration(Duration.ofDays(request.getDuration()))
+                        .withKeyAlgorithm(KeyAlgorithm.valueOf(request.getKeyAlgorithm()));
 
                 if (request.getSubjectAlternativeNames() != null) {
                     for (String subjectAlternativeName : request.getSubjectAlternativeNames()) {
@@ -57,7 +59,8 @@ public class CertificatesGeneratorMojo extends AbstractMojo {
                         AliasRequest req = new AliasRequest()
                                 .withClientCertificate(alias.isClient())
                                 .withPassword(alias.getPassword())
-                                .withCN(alias.getCn());
+                                .withCN(alias.getCn())
+                                .withKeyAlgorithm(KeyAlgorithm.valueOf(alias.getKeyAlgorithm()));
 
                         if (alias.getSubjectAlternativeNames() != null) {
                             for (String subjectAlternativeName : alias.getSubjectAlternativeNames()) {

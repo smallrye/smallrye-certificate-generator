@@ -1,7 +1,6 @@
 package io.smallrye.certs;
 
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.List;
@@ -24,17 +23,14 @@ public class CertificateHolder {
      * Generates a new instance of {@link CertificateHolder}, with a new random key pair and a certificate.
      */
     public CertificateHolder(String cn, List<String> sans, Duration duration, boolean generateClient, String password,
-            CertificateRequest.Issuer issuer) throws Exception {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-
+            CertificateRequest.Issuer issuer, KeyAlgorithm keyAlgorithm) throws Exception {
         this.issuer = issuer;
-        this.keys = keyPairGenerator.generateKeyPair();
-        this.certificate = CertificateUtils.generateCertificate(this.keys, cn, sans, duration, issuer);
+        this.keys = keyAlgorithm.generateKeyPair();
+        this.certificate = CertificateUtils.generateCertificate(this.keys, cn, sans, duration, issuer, keyAlgorithm);
 
         if (generateClient) {
-            clientKeys = keyPairGenerator.generateKeyPair();
-            clientCertificate = CertificateUtils.generateCertificate(clientKeys, cn, sans, duration, issuer);
+            clientKeys = keyAlgorithm.generateKeyPair();
+            clientCertificate = CertificateUtils.generateCertificate(clientKeys, cn, sans, duration, issuer, keyAlgorithm);
         } else {
             clientKeys = null;
             clientCertificate = null;
