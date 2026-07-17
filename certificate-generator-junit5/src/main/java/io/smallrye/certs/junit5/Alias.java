@@ -24,7 +24,7 @@ public @interface Alias {
 
     /**
      * Sets the subject alternative names of the certificate.
-     * Must follow the format "DNS:example.com", or "IP:127.0.0.1".
+     * Must follow the format "DNS:example.com", "IP:127.0.0.1", or "URI:spiffe://example.org/service".
      */
     String[] subjectAlternativeNames() default {};
 

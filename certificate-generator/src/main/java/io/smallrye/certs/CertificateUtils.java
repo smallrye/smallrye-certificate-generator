@@ -64,6 +64,18 @@ public class CertificateUtils {
         Security.addProvider(new BouncyCastleProvider());
     }
 
+    public static GeneralName toGeneralName(String san) {
+        if (san.startsWith("DNS:")) {
+            return new GeneralName(GeneralName.dNSName, san.substring(4));
+        } else if (san.startsWith("IP:")) {
+            return new GeneralName(GeneralName.iPAddress, san.substring(3));
+        } else if (san.startsWith("URI:")) {
+            return new GeneralName(GeneralName.uniformResourceIdentifier, san.substring(4));
+        } else {
+            return new GeneralName(GeneralName.dNSName, san);
+        }
+    }
+
     public static X509Certificate generateCertificate(KeyPair keyPair, String cn, List<String> sans, Duration duration,
             CertificateRequest.Issuer issuerHolder) throws Exception {
         if (issuerHolder != null) {
@@ -116,15 +128,8 @@ public class CertificateUtils {
             });
             builder.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
         } else {
-            DERSequence subjectAlternativeNames = new DERSequence(sans.stream().map(s -> {
-                if (s.startsWith("DNS:")) {
-                    return new GeneralName(GeneralName.dNSName, s.substring(4));
-                } else if (s.startsWith("IP:")) {
-                    return new GeneralName(GeneralName.iPAddress, s.substring(3));
-                } else {
-                    return new GeneralName(GeneralName.dNSName, s);
-                }
-            }).toArray(ASN1Encodable[]::new));
+            DERSequence subjectAlternativeNames = new DERSequence(
+                    sans.stream().map(CertificateUtils::toGeneralName).toArray(ASN1Encodable[]::new));
             builder.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
         }
         return builder;
@@ -151,15 +156,8 @@ public class CertificateUtils {
             });
             certGen.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
         } else {
-            DERSequence subjectAlternativeNames = new DERSequence(sans.stream().map(s -> {
-                if (s.startsWith("DNS:")) {
-                    return new GeneralName(GeneralName.dNSName, s.substring(4));
-                } else if (s.startsWith("IP:")) {
-                    return new GeneralName(GeneralName.iPAddress, s.substring(3));
-                } else {
-                    return new GeneralName(GeneralName.dNSName, s);
-                }
-            }).toArray(ASN1Encodable[]::new));
+            DERSequence subjectAlternativeNames = new DERSequence(
+                    sans.stream().map(CertificateUtils::toGeneralName).toArray(ASN1Encodable[]::new));
             certGen.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
         }
         certGen.addExtension(Extension.subjectKeyIdentifier, false,
