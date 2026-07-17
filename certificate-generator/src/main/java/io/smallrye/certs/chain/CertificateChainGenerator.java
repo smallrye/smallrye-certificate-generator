@@ -14,7 +14,10 @@ import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.*;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.KeyUsage;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -171,15 +174,8 @@ public class CertificateChainGenerator {
         certGen.addExtension(Extension.subjectKeyIdentifier, false,
                 new JcaX509ExtensionUtils().createSubjectKeyIdentifier(leafKeyPair.getPublic()));
 
-        DERSequence subjectAlternativeNames = new DERSequence(sans.stream().map(s -> {
-            if (s.startsWith("DNS:")) {
-                return new GeneralName(GeneralName.dNSName, s.substring(4));
-            } else if (s.startsWith("IP:")) {
-                return new GeneralName(GeneralName.iPAddress, s.substring(3));
-            } else {
-                return new GeneralName(GeneralName.dNSName, s);
-            }
-        }).toArray(ASN1Encodable[]::new));
+        DERSequence subjectAlternativeNames = new DERSequence(
+                sans.stream().map(CertificateUtils::toGeneralName).toArray(ASN1Encodable[]::new));
         certGen.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
 
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
