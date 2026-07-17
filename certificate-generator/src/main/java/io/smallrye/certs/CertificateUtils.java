@@ -77,13 +77,13 @@ public class CertificateUtils {
     }
 
     public static X509Certificate generateCertificate(KeyPair keyPair, String cn, List<String> sans, Duration duration,
-            CertificateRequest.Issuer issuerHolder) throws Exception {
+            CertificateRequest.Issuer issuerHolder, KeyAlgorithm keyAlgorithm) throws Exception {
         if (issuerHolder != null) {
-            return generateSignedCertificate(keyPair, cn, sans, duration, issuerHolder);
+            return generateSignedCertificate(keyPair, cn, sans, duration, issuerHolder, keyAlgorithm);
         }
         var issuer = new X500Name("CN=" + cn);
         X509v3CertificateBuilder builder = getCertificateBuilder(keyPair, cn, sans, duration, issuer);
-        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
+        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder(keyAlgorithm.signatureAlgorithm());
         return new JcaX509CertificateConverter()
                 .getCertificate(builder.build(contentSignerBuilder.build(keyPair.getPrivate())));
     }
@@ -136,7 +136,7 @@ public class CertificateUtils {
     }
 
     public static X509Certificate generateSignedCertificate(KeyPair keyPair, String cn, List<String> sans, Duration duration,
-            CertificateRequest.Issuer issuerHolder) throws Exception {
+            CertificateRequest.Issuer issuerHolder, KeyAlgorithm keyAlgorithm) throws Exception {
         var before = Instant.now().minus(2, ChronoUnit.DAYS);
         var after = Instant.now().plus(duration.toDays(), ChronoUnit.DAYS);
         X509V3CertificateGenerator certGen = new X509V3CertificateGenerator();
@@ -146,7 +146,7 @@ public class CertificateUtils {
         certGen.setPublicKey(keyPair.getPublic());
         certGen.setNotBefore(new Date(before.toEpochMilli())); // Yesterday
         certGen.setNotAfter(new Date(after.toEpochMilli())); // 1 year
-        certGen.setSignatureAlgorithm("SHA256WithRSAEncryption");
+        certGen.setSignatureAlgorithm(keyAlgorithm.signatureAlgorithm());
 
         if (sans.isEmpty()) {
             DERSequence subjectAlternativeNames = new DERSequence(new ASN1Encodable[] {

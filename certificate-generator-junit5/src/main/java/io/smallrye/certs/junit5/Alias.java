@@ -1,5 +1,7 @@
 package io.smallrye.certs.junit5;
 
+import io.smallrye.certs.KeyAlgorithm;
+
 public @interface Alias {
 
     /**
@@ -21,6 +23,11 @@ public @interface Alias {
      * Sets whether the certificate is a client certificate. This is useful for mutual TLS.
      */
     boolean client() default false;
+
+    /**
+     * Sets the key algorithm. Defaults to RSA-2048.
+     */
+    KeyAlgorithm keyAlgorithm() default KeyAlgorithm.RSA_2048;
 
     /**
      * Sets the subject alternative names of the certificate.

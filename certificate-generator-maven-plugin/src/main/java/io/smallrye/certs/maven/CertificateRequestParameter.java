@@ -19,6 +19,9 @@ public class CertificateRequestParameter {
     @Parameter(defaultValue = "false")
     private boolean client;
 
+    @Parameter(defaultValue = "RSA_2048")
+    private String keyAlgorithm;
+
     @Parameter
     private List<String> subjectAlternativeNames;
 
@@ -71,6 +74,14 @@ public class CertificateRequestParameter {
 
     public void setClient(boolean client) {
         this.client = client;
+    }
+
+    public String getKeyAlgorithm() {
+        return keyAlgorithm;
+    }
+
+    public void setKeyAlgorithm(String keyAlgorithm) {
+        this.keyAlgorithm = keyAlgorithm;
     }
 
     public void setSubjectAlternativeNames(List<String> subjectAlternativeNames) {

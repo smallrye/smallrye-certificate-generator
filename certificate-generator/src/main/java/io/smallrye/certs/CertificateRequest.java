@@ -16,6 +16,7 @@ public final class CertificateRequest {
     private String cn = "localhost";
 
     private boolean client = false;
+    private KeyAlgorithm keyAlgorithm = KeyAlgorithm.RSA_2048;
 
     private final Map<String, AliasRequest> aliases = new HashMap<>();
     private final List<String> sans = new ArrayList<>();
@@ -70,6 +71,11 @@ public final class CertificateRequest {
 
     public CertificateRequest withClientCertificate(boolean client) {
         this.client = client;
+        return this;
+    }
+
+    public CertificateRequest withKeyAlgorithm(KeyAlgorithm keyAlgorithm) {
+        this.keyAlgorithm = keyAlgorithm;
         return this;
     }
 
@@ -131,6 +137,10 @@ public final class CertificateRequest {
 
     public Map<String, AliasRequest> aliases() {
         return aliases;
+    }
+
+    public KeyAlgorithm getKeyAlgorithm() {
+        return keyAlgorithm;
     }
 
     public boolean isSelfSigned() {

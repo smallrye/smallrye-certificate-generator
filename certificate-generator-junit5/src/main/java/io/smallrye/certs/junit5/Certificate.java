@@ -1,6 +1,7 @@
 package io.smallrye.certs.junit5;
 
 import io.smallrye.certs.Format;
+import io.smallrye.certs.KeyAlgorithm;
 
 public @interface Certificate {
 
@@ -35,6 +36,11 @@ public @interface Certificate {
     boolean client() default false;
 
     Alias[] aliases() default {};
+
+    /**
+     * Sets the key algorithm. Defaults to RSA-2048.
+     */
+    KeyAlgorithm keyAlgorithm() default KeyAlgorithm.RSA_2048;
 
     /**
      * Sets the subject alternative names of the certificate.

@@ -31,7 +31,7 @@ public class CertificateRequestManager {
         this.name = request.name();
         holders.put(request.name(),
                 new CertificateHolder(request.getCN(), request.getSubjectAlternativeNames(), request.getDuration(),
-                        request.hasClient(), request.getPassword(), request.issuer()));
+                        request.hasClient(), request.getPassword(), request.issuer(), request.getKeyAlgorithm()));
 
         for (String alias : request.aliases().keySet()) {
             AliasRequest nested = request.aliases().get(alias);
@@ -40,9 +40,11 @@ public class CertificateRequestManager {
             if (cn == null) {
                 cn = request.getCN();
             }
+            KeyAlgorithm aliasKeyAlgorithm = nested.getKeyAlgorithm() != null ? nested.getKeyAlgorithm()
+                    : request.getKeyAlgorithm();
             holders.put(alias,
                     new CertificateHolder(cn, nested.getSubjectAlternativeNames(), request.getDuration(), nested.hasClient(),
-                            nested.getPassword(), request.issuer()));
+                            nested.getPassword(), request.issuer(), aliasKeyAlgorithm));
         }
     }
 
