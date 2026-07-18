@@ -2,8 +2,10 @@ package io.smallrye.certs.chain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.bouncycastle.asn1.x509.GeneralName.uniformResourceIdentifier;
 
 import java.io.File;
+import java.util.List;
 
 import javax.net.ssl.SSLHandshakeException;
 
@@ -150,6 +152,46 @@ class CertificateChainGeneratorTest {
 
         TrustOptions clientTS = new PemTrustOptions()
                 .addCertPath(rootCert.getAbsolutePath());
+
+        HttpServer server = VertxHttpHelper.createHttpServer(vertx, serverKS);
+        HttpClientResponse response = VertxHttpHelper.createHttpClientAndInvoke(vertx, server, clientTS);
+        assertThat(response.statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void testCaSanOnRootAndIntermediate() throws Exception {
+        File dir = new File("target/chain-ca-san");
+        new CertificateChainGenerator(dir)
+                .withCN("spiffe-app")
+                .withSAN(List.of("URI:spiffe://example.org/my-service", "DNS:localhost"))
+                .withCaSAN(List.of("URI:spiffe://example.org"))
+                .generate();
+
+        var rootCert = CertificateUtils.loadCertificate(new File(dir, "root.crt"));
+        assertThat(rootCert.getSubjectAlternativeNames()).anySatisfy(san -> {
+            assertThat(san.get(0)).isEqualTo(uniformResourceIdentifier);
+            assertThat(san.get(1)).isEqualTo("spiffe://example.org");
+        });
+
+        var intermediateCert = CertificateUtils.loadCertificate(new File(dir, "intermediate.crt"));
+        assertThat(intermediateCert.getSubjectAlternativeNames()).anySatisfy(san -> {
+            assertThat(san.get(0)).isEqualTo(uniformResourceIdentifier);
+            assertThat(san.get(1)).isEqualTo("spiffe://example.org");
+        });
+
+        var leafCert = CertificateUtils.loadCertificate(new File(dir, "spiffe-app.crt"));
+        assertThat(leafCert.getSubjectAlternativeNames()).anySatisfy(san -> {
+            assertThat(san.get(0)).isEqualTo(uniformResourceIdentifier);
+            assertThat(san.get(1)).isEqualTo("spiffe://example.org/my-service");
+        });
+        assertThat(leafCert.getSubjectAlternativeNames())
+                .noneSatisfy(san -> assertThat(san.get(1)).isEqualTo("spiffe://example.org"));
+
+        PemKeyCertOptions serverKS = new PemKeyCertOptions()
+                .setKeyPath(new File(dir, "spiffe-app.key").getAbsolutePath())
+                .setCertPath(new File(dir, "spiffe-app.crt").getAbsolutePath());
+        TrustOptions clientTS = new PemTrustOptions()
+                .addCertPath(new File(dir, "root.crt").getAbsolutePath());
 
         HttpServer server = VertxHttpHelper.createHttpServer(vertx, serverKS);
         HttpClientResponse response = VertxHttpHelper.createHttpClientAndInvoke(vertx, server, clientTS);

@@ -10,9 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 
-import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
@@ -40,6 +38,8 @@ public class CertificateChainGenerator {
     private String cn = "localhost";
 
     private List<String> sans = List.of("DNS:localhost");
+
+    private List<String> caSans = List.of();
 
     private KeyAlgorithm keyAlgorithm = KeyAlgorithm.RSA_2048;
 
@@ -70,7 +70,18 @@ public class CertificateChainGenerator {
      * @return the current generator instance
      */
     public CertificateChainGenerator withSAN(List<String> san) {
-        this.sans = san;
+        this.sans = san == null ? List.of() : san;
+        return this;
+    }
+
+    /**
+     * Configure the Subject Alternative Names of the root and intermediate CA certificates.
+     *
+     * @param caSans the list of SAN, by default empty (no SANs on CA certs)
+     * @return the current generator instance
+     */
+    public CertificateChainGenerator withCaSAN(List<String> caSans) {
+        this.caSans = caSans == null ? List.of() : caSans;
         return this;
     }
 
@@ -129,6 +140,10 @@ public class CertificateChainGenerator {
         certGen.addExtension(Extension.subjectKeyIdentifier, false,
                 new JcaX509ExtensionUtils().createSubjectKeyIdentifier(rootKeyPair.getPublic()));
 
+        if (!caSans.isEmpty()) {
+            certGen.addExtension(Extension.subjectAlternativeName, false, CertificateUtils.toSanSequence(caSans));
+        }
+
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder(keyAlgorithm.signatureAlgorithm());
         ContentSigner signer = contentSignerBuilder.build(rootKeyPair.getPrivate());
         X509CertificateHolder holder = certGen.build(signer);
@@ -153,6 +168,10 @@ public class CertificateChainGenerator {
         certGen.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
         certGen.addExtension(Extension.subjectKeyIdentifier, false,
                 new JcaX509ExtensionUtils().createSubjectKeyIdentifier(intermediaryKeyPair.getPublic()));
+
+        if (!caSans.isEmpty()) {
+            certGen.addExtension(Extension.subjectAlternativeName, false, CertificateUtils.toSanSequence(caSans));
+        }
 
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder(keyAlgorithm.signatureAlgorithm());
         ContentSigner contentSigner = contentSignerBuilder.build(rootKeyPair.getPrivate());
@@ -180,9 +199,9 @@ public class CertificateChainGenerator {
         certGen.addExtension(Extension.subjectKeyIdentifier, false,
                 new JcaX509ExtensionUtils().createSubjectKeyIdentifier(leafKeyPair.getPublic()));
 
-        DERSequence subjectAlternativeNames = new DERSequence(
-                sans.stream().map(CertificateUtils::toGeneralName).toArray(ASN1Encodable[]::new));
-        certGen.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
+        if (!sans.isEmpty()) {
+            certGen.addExtension(Extension.subjectAlternativeName, false, CertificateUtils.toSanSequence(sans));
+        }
 
         JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder(keyAlgorithm.signatureAlgorithm());
         ContentSigner contentSigner = contentSignerBuilder.build(intermediaryKeyPair.getPrivate());
