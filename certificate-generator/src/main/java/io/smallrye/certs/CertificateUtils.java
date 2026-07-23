@@ -64,6 +64,20 @@ public class CertificateUtils {
         Security.addProvider(new BouncyCastleProvider());
     }
 
+    /**
+     * Converts a list of SAN strings into a DERSequence suitable for the subjectAlternativeName extension.
+     *
+     * @param sans the list of SAN strings (e.g. "DNS:localhost", "URI:spiffe://example.org"), must not be null or empty
+     * @return a DERSequence containing the GeneralName entries
+     * @throws IllegalArgumentException if sans is null or empty
+     */
+    public static DERSequence toSanSequence(List<String> sans) {
+        if (sans == null || sans.isEmpty()) {
+            throw new IllegalArgumentException("SANs list must not be null or empty");
+        }
+        return new DERSequence(sans.stream().map(CertificateUtils::toGeneralName).toArray(ASN1Encodable[]::new));
+    }
+
     public static GeneralName toGeneralName(String san) {
         if (san.startsWith("DNS:")) {
             return new GeneralName(GeneralName.dNSName, san.substring(4));
@@ -128,8 +142,7 @@ public class CertificateUtils {
             });
             builder.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
         } else {
-            DERSequence subjectAlternativeNames = new DERSequence(
-                    sans.stream().map(CertificateUtils::toGeneralName).toArray(ASN1Encodable[]::new));
+            DERSequence subjectAlternativeNames = toSanSequence(sans);
             builder.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
         }
         return builder;
@@ -156,8 +169,7 @@ public class CertificateUtils {
             });
             certGen.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
         } else {
-            DERSequence subjectAlternativeNames = new DERSequence(
-                    sans.stream().map(CertificateUtils::toGeneralName).toArray(ASN1Encodable[]::new));
+            DERSequence subjectAlternativeNames = toSanSequence(sans);
             certGen.addExtension(Extension.subjectAlternativeName, false, subjectAlternativeNames);
         }
         certGen.addExtension(Extension.subjectKeyIdentifier, false,
