@@ -1,5 +1,6 @@
 package io.smallrye.certs.maven;
 
+import io.smallrye.certs.KeyAlgorithm;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.util.List;
@@ -77,6 +78,9 @@ public class CertificateRequestParameter {
     }
 
     public String getKeyAlgorithm() {
+        if (keyAlgorithm == null) {
+            return KeyAlgorithm.RSA_2048.name();
+        }
         return keyAlgorithm;
     }
 
