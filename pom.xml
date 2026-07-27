@@ -50,7 +50,7 @@
         <impsort-maven-plugin.version>1.13.0</impsort-maven-plugin.version>
         <jandex-maven-plugin.version>3.5.3</jandex-maven-plugin.version>
         <smallrye-common-constraint.version>2.20.0</smallrye-common-constraint.version>
-        <dd-plist.version>1.29</dd-plist.version>
+        <dd-plist.version>1.30</dd-plist.version>
     </properties>
 
     <modules>
