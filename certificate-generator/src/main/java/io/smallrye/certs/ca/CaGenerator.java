@@ -150,7 +150,9 @@ public class CaGenerator {
         keyStore.setKeyEntry(KEYSTORE_KEY_ENTRY, keyPair.getPrivate(), password.toCharArray(),
                 new java.security.cert.Certificate[] { cert });
         keyStore.setCertificateEntry(KEYSTORE_CERT_ENTRY, cert);
-        keyStore.store(new FileOutputStream(ks), password.toCharArray());
+        try (var fos = new FileOutputStream(ks)) {
+            keyStore.store(fos, password.toCharArray());
+        }
 
         // Adjust permissions
         if (OS.MAC.isCurrent() || OS.LINUX.isCurrent()) {
@@ -186,9 +188,9 @@ public class CaGenerator {
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(null, null);
         keyStore.setCertificateEntry(KEYSTORE_CERT_ENTRY, generatedCA);
-        var fos = new FileOutputStream(trustStore);
-        keyStore.store(fos, password.toCharArray());
-        fos.close();
+        try (var fos = new FileOutputStream(trustStore)) {
+            keyStore.store(fos, password.toCharArray());
+        }
         LOGGER.log(INFO, "🔥 Truststore generated successfully: {0}.", trustStore.getAbsolutePath());
     }
 
