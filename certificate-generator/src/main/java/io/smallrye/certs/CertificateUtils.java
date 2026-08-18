@@ -275,9 +275,9 @@ public class CertificateUtils {
                     new Certificate[] { entry.getValue().certificate() });
         }
 
-        FileOutputStream keyStoreFos = new FileOutputStream(output);
-        keyStore.store(keyStoreFos, password.toCharArray());
-        keyStoreFos.close();
+        try (FileOutputStream keyStoreFos = new FileOutputStream(output)) {
+            keyStore.store(keyStoreFos, password.toCharArray());
+        }
     }
 
     public static void writeClientPrivateKeyAndCertificateToJKS(Map<String, CertificateHolder> certs, String password,
@@ -299,9 +299,9 @@ public class CertificateUtils {
         }
 
         if (hasAtLeastOneEntry) {
-            FileOutputStream keyStoreFos = new FileOutputStream(output);
-            keyStore.store(keyStoreFos, password.toCharArray());
-            keyStoreFos.close();
+            try (FileOutputStream keyStoreFos = new FileOutputStream(output)) {
+                keyStore.store(keyStoreFos, password.toCharArray());
+            }
         }
     }
 
@@ -312,9 +312,9 @@ public class CertificateUtils {
         for (Map.Entry<String, CertificateHolder> entry : certificates.entrySet()) {
             trustStore.setCertificateEntry(entry.getKey(), entry.getValue().certificate());
         }
-        FileOutputStream trustStoreFos = new FileOutputStream(output);
-        trustStore.store(trustStoreFos, password);
-        trustStoreFos.close();
+        try (FileOutputStream trustStoreFos = new FileOutputStream(output)) {
+            trustStore.store(trustStoreFos, password);
+        }
     }
 
     public static void writeServerTrustStoreToJKS(Map<String, CertificateHolder> certificates, File output, char[] password)
@@ -332,9 +332,9 @@ public class CertificateUtils {
         }
 
         if (hasAtLeastOneEntry) {
-            FileOutputStream trustStoreFos = new FileOutputStream(output);
-            trustStore.store(trustStoreFos, password);
-            trustStoreFos.close();
+            try (FileOutputStream trustStoreFos = new FileOutputStream(output)) {
+                trustStore.store(trustStoreFos, password);
+            }
         }
     }
 
@@ -354,9 +354,9 @@ public class CertificateUtils {
                     new Certificate[] { entry.getValue().certificate() });
         }
 
-        FileOutputStream keyStoreFos = new FileOutputStream(output);
-        keyStore.store(keyStoreFos, password);
-        keyStoreFos.close();
+        try (FileOutputStream keyStoreFos = new FileOutputStream(output)) {
+            keyStore.store(keyStoreFos, password);
+        }
     }
 
     public static void writeClientPrivateKeyAndCertificateToPKCS12(Map<String, CertificateHolder> certificates, File output,
@@ -378,9 +378,9 @@ public class CertificateUtils {
         }
 
         if (hasAtLeastOneEntry) {
-            FileOutputStream keyStoreFos = new FileOutputStream(output);
-            keyStore.store(keyStoreFos, password);
-            keyStoreFos.close();
+            try (FileOutputStream keyStoreFos = new FileOutputStream(output)) {
+                keyStore.store(keyStoreFos, password);
+            }
         }
     }
 
@@ -391,9 +391,9 @@ public class CertificateUtils {
         for (Map.Entry<String, CertificateHolder> entry : certificates.entrySet()) {
             trustStore.setCertificateEntry(entry.getKey(), entry.getValue().certificate());
         }
-        FileOutputStream trustStoreFos = new FileOutputStream(output);
-        trustStore.store(trustStoreFos, password);
-        trustStoreFos.close();
+        try (FileOutputStream trustStoreFos = new FileOutputStream(output)) {
+            trustStore.store(trustStoreFos, password);
+        }
     }
 
     public static void writeServerTrustStoreToPKCS12(Map<String, CertificateHolder> certificates, File output, char[] password)
@@ -410,9 +410,9 @@ public class CertificateUtils {
         }
 
         if (hasAtLeastOneEntry) {
-            FileOutputStream trustStoreFos = new FileOutputStream(output);
-            trustStore.store(trustStoreFos, password);
-            trustStoreFos.close();
+            try (FileOutputStream trustStoreFos = new FileOutputStream(output)) {
+                trustStore.store(trustStoreFos, password);
+            }
         }
     }
 
