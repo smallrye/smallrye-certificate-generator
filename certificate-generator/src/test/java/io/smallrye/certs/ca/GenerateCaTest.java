@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -16,6 +17,7 @@ import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import io.smallrye.certs.CertificateGenerator;
 import io.smallrye.certs.CertificateRequest;
@@ -71,6 +73,25 @@ public class GenerateCaTest {
             assertThat(ks.getCertificate("test")).isNotNull();
         }
 
+    }
+
+    /**
+     * Reproducer for issue #92: {@code generate(...)} must not leak the keystore {@link FileInputStream}/output stream,
+     * otherwise the file handle keeps the {@code .p12} locked on Windows and it cannot be deleted afterwards.
+     */
+    @Test
+    void keystoreCanBeDeletedAfterGeneration(@TempDir File out) throws Exception {
+        var ca = new File(out, "ca.crt");
+        var key = new File(out, "ca.key");
+        var store = new File(out, "ks.p12");
+        CaGenerator generator = new CaGenerator(ca, key, store, "test");
+        generator.generate("localhost", "Test", "Test Dev", "home", "world", "Cloud");
+
+        assertThat(store).exists();
+
+        // On Windows a leaked stream would keep the file locked and this deletion would throw.
+        Files.delete(store.toPath());
+        assertThat(store).doesNotExist();
     }
 
     private X509Certificate loadRootCertificate(File ca) throws Exception {
