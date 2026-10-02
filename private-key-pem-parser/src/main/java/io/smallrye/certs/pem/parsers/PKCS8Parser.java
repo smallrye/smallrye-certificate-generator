@@ -20,8 +20,6 @@ public class PKCS8Parser implements PKPemParser {
 
     private static final Pattern PATTERN = Pattern.compile(PKCS8_START + BASE64_TEXT + PKCS8_END, Pattern.CASE_INSENSITIVE);
 
-    private static final List<String> ALGORITHMS = List.of("RSA", "RSASSA-PSS", "EC", "DSA", "EdDSA", "XDH");
-
     public PKCS8Parser() {
     }
 

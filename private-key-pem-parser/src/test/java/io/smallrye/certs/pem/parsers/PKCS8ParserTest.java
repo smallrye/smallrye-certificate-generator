@@ -16,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PKCS8ParserTest {
 
@@ -80,5 +82,14 @@ class PKCS8ParserTest {
                 """;
         PrivateKey parsedKey = parser.getKey(nonPkcs8PemKey, null);
         assertNull(parsedKey, "Parsed private key should be null for a non-PKCS8 format");
+    }
+
+    @Test
+    void testGetKeyOrFail() {
+        assertArrayEquals(originalPrivateKey.getEncoded(), parser.getKeyOrFail(pkcs8PemKey, null).getEncoded());
+        String invalidPemKey = "-----BEGIN PRIVATE KEY-----\nInvalidBase64Data==\n-----END PRIVATE KEY-----";
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> parser.getKeyOrFail(invalidPemKey, null));
+        assertTrue(e.getMessage().contains("PKCS8Parser"), e.getMessage());
     }
 }
