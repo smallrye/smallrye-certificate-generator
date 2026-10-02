@@ -31,6 +31,8 @@ public class EncryptedPKCS8Parser implements PKPemParser {
 
     private static final List<String> ALGORITHMS = List.of("RSA", "RSASSA-PSS", "EC", "DSA", "EdDSA", "XDH");
 
+    public static final String PBES2_ALGORITHM = "PBES2";
+
     public EncryptedPKCS8Parser() {
     }
 
@@ -38,27 +40,40 @@ public class EncryptedPKCS8Parser implements PKPemParser {
      * Extracts the private key from the encrypted PKCS#8 format.
      *
      * @param content the encrypted PKCS#8 content
-     * @param password the password to decrypt the key
+     * @param secret the secret to decrypt the key
      * @return the private key or {@code null} if the content is not a PKCS#8 encrypted key
      */
     @Override
-    public PrivateKey getKey(String content, String password) {
+    public PrivateKey getKey(String content, String secret) {
         try {
-            Matcher matcher = PATTERN.matcher(content);
-            if (matcher.find()) {
-                var encoded = matcher.group(BASE64_TEXT_GROUP);
-                var decoded = decodeBase64(encoded);
-                return extract(decoded, password);
-            }
+            return getKeyOrFail(content, secret);
         } catch (Exception e) {
             return null;
         }
-        // Does not match PKCS8 encrypted pattern
-        return null;
     }
 
-    private PrivateKey extract(byte[] decoded, String password) {
-        var key = decrypt(decoded, password);
+    /**
+     * Extracts the private key from the encrypted PKCS#8 format, and reports why when it cannot.
+     *
+     * @param content the encrypted PKCS#8 content
+     * @param secret the secret to decrypt the key
+     * @return the private key, never {@code null}
+     * @throws IllegalArgumentException if the content is not a PKCS#8 encrypted key, is malformed, is encrypted with
+     *         an algorithm that is not available, or cannot be decrypted with the given secret
+     */
+    @Override
+    public PrivateKey getKeyOrFail(String content, String secret) {
+        Matcher matcher = PATTERN.matcher(content);
+        if (!matcher.find()) {
+            throw new IllegalArgumentException("Not an encrypted PKCS#8 key: there is no 'ENCRYPTED PRIVATE KEY' block");
+        }
+        EncryptedPrivateKeyInfo keyInfo;
+        try {
+            keyInfo = new EncryptedPrivateKeyInfo(decodeBase64(matcher.group(BASE64_TEXT_GROUP)));
+        } catch (IOException | IllegalArgumentException e) {
+            throw new IllegalArgumentException("The encrypted PKCS#8 key is malformed", e);
+        }
+        var key = decrypt(keyInfo, secret);
         for (String algo : ALGORITHMS) {
             try {
                 KeyFactory factory = KeyFactory.getInstance(algo);
@@ -67,23 +82,39 @@ public class EncryptedPKCS8Parser implements PKPemParser {
                 // Ignore
             }
         }
-        return null;
+        String algo = key.getAlgorithm();
+        throw new IllegalArgumentException(algo != null
+                ? "The algorithm of the decrypted key '" + algo + "' is not one of " + ALGORITHMS
+                : "The algorithm of the decrypted key could not be determined and is not one of " + ALGORITHMS);
     }
 
-    public static final String PBES2_ALGORITHM = "PBES2";
-
-    static PKCS8EncodedKeySpec decrypt(byte[] bytes, String password) {
+    static PKCS8EncodedKeySpec decrypt(byte[] bytes, String secret) {
         try {
-            EncryptedPrivateKeyInfo keyInfo = new EncryptedPrivateKeyInfo(bytes);
-            AlgorithmParameters algorithmParameters = keyInfo.getAlgParameters();
-            String encryptionAlgorithm = getEncryptionAlgorithm(algorithmParameters, keyInfo.getAlgName());
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(encryptionAlgorithm);
-            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password.toCharArray()));
-            Cipher cipher = Cipher.getInstance(encryptionAlgorithm);
+            return decrypt(new EncryptedPrivateKeyInfo(bytes), secret);
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("Error decrypting private key", ex);
+        }
+    }
+
+    private static PKCS8EncodedKeySpec decrypt(EncryptedPrivateKeyInfo keyInfo, String secret) {
+        AlgorithmParameters algorithmParameters = keyInfo.getAlgParameters();
+        String encryptionAlgorithm = getEncryptionAlgorithm(algorithmParameters, keyInfo.getAlgName());
+        Cipher cipher;
+        SecretKeyFactory keyFactory;
+        try {
+            keyFactory = SecretKeyFactory.getInstance(encryptionAlgorithm);
+            cipher = Cipher.getInstance(encryptionAlgorithm);
+        } catch (GeneralSecurityException ex) {
+            throw new IllegalArgumentException("The key is encrypted with '" + encryptionAlgorithm
+                    + "', which is not available from the installed security providers", ex);
+        }
+        try {
+            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(secret.toCharArray()));
             cipher.init(Cipher.DECRYPT_MODE, key, algorithmParameters);
             return keyInfo.getKeySpec(cipher);
-        } catch (IOException | GeneralSecurityException ex) {
-            throw new IllegalArgumentException("Error decrypting private key", ex);
+        } catch (GeneralSecurityException ex) {
+            throw new IllegalArgumentException("Unable to decrypt the key encrypted with '" + encryptionAlgorithm
+                    + "', the secret is probably wrong", ex);
         }
     }
 
@@ -98,7 +129,7 @@ public class EncryptedPKCS8Parser implements PKPemParser {
      * Retrieves the private key as plain PKCS#8 from the encrypted PKCS#8 content.
      *
      * @param content the encrypted PKCS#8 content
-     * @param secret the password to decrypt the key
+     * @param secret the secret to decrypt the key
      * @return the decrypted PKCS#8 key or {@code null} if the content is not a PKCS#8 encrypted key
      */
     public Buffer decryptKey(String content, String secret) {
@@ -106,6 +137,23 @@ public class EncryptedPKCS8Parser implements PKPemParser {
         if (pk == null) {
             return null;
         }
+        return toPem(pk);
+    }
+
+    /**
+     * Retrieves the private key as plain PKCS#8 from the encrypted PKCS#8 content, and reports why when it cannot.
+     *
+     * @param content the encrypted PKCS#8 content
+     * @param secret the secret to decrypt the key
+     * @return the decrypted PKCS#8 key, never {@code null}
+     * @throws IllegalArgumentException if the content is not a PKCS#8 encrypted key, is malformed, is encrypted with
+     *         an algorithm that is not available, or cannot be decrypted with the given secret
+     */
+    public Buffer decryptKeyOrFail(String content, String secret) {
+        return toPem(getKeyOrFail(content, secret));
+    }
+
+    private static Buffer toPem(PrivateKey pk) {
         Buffer buffer = Buffer.buffer();
         buffer.appendString("-----BEGIN PRIVATE KEY-----\n");
         buffer.appendString(Base64.getEncoder().encodeToString(pk.getEncoded()));
