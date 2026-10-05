@@ -37,7 +37,7 @@ public class GenerateCaTest {
         var key = new File(out, "ca.key");
         var store = new File(out, "ks.p12");
         CaGenerator generator = new CaGenerator(ca, key, store, "test");
-        generator.generate("localhost", "Test", "Test Dev", "home", "world", "Cloud");
+        generator.generate("localhost", "Test", "Test Dev", "home", "world", "CL");
 
         assertThat(ca).exists();
         assertThat(key).exists();
@@ -85,7 +85,7 @@ public class GenerateCaTest {
         var key = new File(out, "ca.key");
         var store = new File(out, "ks.p12");
         CaGenerator generator = new CaGenerator(ca, key, store, "test");
-        generator.generate("localhost", "Test", "Test Dev", "home", "world", "Cloud");
+        generator.generate("localhost", "Test", "Test Dev", "home", "world", "CL");
 
         assertThat(store).exists();
 
